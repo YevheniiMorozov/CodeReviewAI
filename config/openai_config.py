@@ -51,13 +51,12 @@ Please review the provided code according to the specified level and respond in 
 
 {repo_content}
 
-### Previous Review So Far:
+### Previous Review:
 {previous_response}
 
-### New Review:
-Now analyze the new code content in this chunk, and update your review by incorporating the following:
-- Update previous review with any new feedback.
-- Merge the list of file from the **previous review** with the new files found in this chunk. Do **not** overwrite the previous list, but add any new files to it.
+Update previous review:
+- Add any new feedback.
+- Merge the list of files from the **previous review** with the new files found in this chunk. Do **not** overwrite the previous list, but add any new files to it.
 
-Return only the updated response, integrating new feedback with the previous one.
+The result should be in markdown format, containing merged previous result and new review.
 """

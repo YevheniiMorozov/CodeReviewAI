@@ -82,7 +82,7 @@ class Orchestrator:
 
                 with item.open('r', encoding='utf-8') as file:
                     content = file.read()
-                    files.append(f"{relative_path}:\n{content}")
+                    files.append(f"File_name:{relative_path}\nContent:\n{content}")
 
         return files
 

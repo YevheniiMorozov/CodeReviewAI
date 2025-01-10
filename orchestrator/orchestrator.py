@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import TypedDict, Optional, Literal
 
@@ -29,12 +30,17 @@ class OrchestratorResponse(TypedDict):
 
 class Orchestrator:
 
-    def __init__(self, repo_url: str, dev_lvl: Literal["Junior", "Middle", "Senior"]) -> None:
+    def __init__(self,
+                 repo_url: str,
+                 dev_lvl: Literal["Junior", "Middle", "Senior"],
+                 assignment_description: str) -> None:
         self._owner, self._repo = extract_repo_owner_and_name_from_url(repo_url)
         self._repo_url = repo_url
         self._github_rate_limit: Optional[TypedDict] = None
         self._gpt_context_window = OPEN_AI_TOKEN_LIMITS_PER_MINUTE
         self.dev_lvl = dev_lvl
+        self._assignment_description = assignment_description
+        self._path_to_files = REPO_CONTENT_PATH_DIR / self._owner / self._repo
 
     async def _download_repo_content(self) -> None:
         """Download repo content from GitHub API.
@@ -67,14 +73,12 @@ class Orchestrator:
         :return: list with files content
         """
 
-        path_to_files = REPO_CONTENT_PATH_DIR / self._owner / self._repo
-
         files = []
-        for item in path_to_files.rglob('*'):
+        for item in self._path_to_files.rglob('*'):
             # ignoring all non-text files
             if item.is_file() and self.__is_text_file(item):
 
-                relative_path = item.relative_to(path_to_files)
+                relative_path = item.relative_to(self._path_to_files)
 
                 with item.open('r', encoding='utf-8') as file:
                     content = file.read()
@@ -83,21 +87,23 @@ class Orchestrator:
         return files
 
     async def _get_gpt_answer(self, files_content: str, previous_response: str = None) -> str:
-        worker = OpenAIWorker()
 
         if previous_response:
             user_message = USER_MESSAGE_TEMPLATE_FOR_CHUNKS.format(
                 dev_level=self.dev_lvl,
                 repo_content=files_content,
-                previous_response=previous_response
+                previous_response=previous_response,
+                assignment_description=self._assignment_description
             )
         else:
             user_message = USER_MESSAGE_TEMPLATE.format(
                 dev_level=self.dev_lvl,
-                repo_content=files_content
+                repo_content=files_content,
+                assignment_description=self._assignment_description
             )
 
-        answer = await worker.get_answer_from_gpt(SYS_MESSAGE, user_message)
+        with OpenAIWorker() as worker:
+            answer = await worker.get_answer_from_gpt(SYS_MESSAGE, user_message)
 
         return answer
 
@@ -130,7 +136,7 @@ class Orchestrator:
         gpt_result = await self._get_gpt_answer(files_content, previous_response)
 
         red = await get_redis_conn_async()
-        await red.set(self._repo_url, gpt_result)
+        await red.set(self._repo_url, gpt_result, ex=3600)
 
         return gpt_result
 
@@ -138,6 +144,10 @@ class Orchestrator:
         red = await get_redis_conn_async()
         gpt_result = await red.get(self._repo_url)
         return gpt_result
+
+    def _delete_repo_content_from_dir(self) -> None:
+        if self._path_to_files.exists():
+            shutil.rmtree(self._path_to_files)
 
     async def run(self) -> OrchestratorResponse:
         try:
@@ -180,7 +190,8 @@ class Orchestrator:
             logger.error(msg, exc_info=True)
             return OrchestratorResponse(error=True, message=msg)
 
+        self._delete_repo_content_from_dir()
+
         return OrchestratorResponse(
             error=False,
             message=gpt_result)
-

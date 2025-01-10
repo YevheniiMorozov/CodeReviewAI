@@ -9,14 +9,14 @@ from config.main_config import OPEN_AI_MODEL
 
 
 def extract_repo_owner_and_name_from_url(url: str) -> tuple[str, str]:
-    pattern = r"https://github\.com/([^/]+)/([^/]+)\.git"
+    pattern = r"https:\/\/github\.com\/([^\/]+)\/([^\/]+).*"
     matches = re.match(pattern, url)
 
     if not matches:
         raise ValueError(f"Invalid URL: {url}")
 
     try:
-        return matches.group(1), matches.group(2)
+        return matches.group(1), matches.group(2).replace(".git", '')
     except IndexError:
         raise ValueError(f"Invalid URL: {url}")
 
@@ -24,10 +24,6 @@ def extract_repo_owner_and_name_from_url(url: str) -> tuple[str, str]:
 def token_counter(text: str) -> int:
     encoding = tiktoken.encoding_for_model(OPEN_AI_MODEL)
     return len(encoding.encode(text, disallowed_special=()))
-
-
-def rm_repo_content_from_path(path: str | Path) -> None:
-    shutil.rmtree(path)
 
 
 def timestamp_to_human_date(_timestamp: int) -> str:

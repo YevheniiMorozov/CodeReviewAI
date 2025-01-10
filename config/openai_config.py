@@ -30,6 +30,10 @@ Maintain a **constructive tone** throughout the review. Your goal is to help the
 
 USER_MESSAGE_TEMPLATE = """
 Developer Level: {dev_level}
+
+Coding Assignment Description:
+{assignment_description}
+
 Please review the provided code according to the specified level and respond in the markdown format described in your system instructions.
 
 {repo_content}
@@ -39,6 +43,10 @@ Return only response according to your instructions
 
 USER_MESSAGE_TEMPLATE_FOR_CHUNKS = """
 Developer Level: {dev_level}
+
+Coding Assignment Description:
+{assignment_description}
+
 Please review the provided code according to the specified level and respond in the markdown format described in your system instructions.
 
 {repo_content}

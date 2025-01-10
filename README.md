@@ -34,7 +34,8 @@ It also relies on the server and Redis (which uses RAM for storing data).
 For better scalability, consider using a database (e.g., PostgreSQL) 
 to store cached data and repository content (optional).
 
-Possible Schema for Scaling
+## Possible Schema for Scaling
+
 ![schema](schema.png)
 
 

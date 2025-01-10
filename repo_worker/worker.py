@@ -76,9 +76,9 @@ class GithubAPIWorker:
 
     async def upload_repo_content(self,
                                   repo_api_url: str = None,
-                                  dir_name: Path = None,
+                                  dir_name: Path | str = None,
                                   deeper: bool = False,
-                                  path_to_save: Path = None) -> bool:
+                                  path_to_save: Path = None) -> None:
         """Download repo content from using GitHub API
         :param repo_api_url: parameter is used for recursive downloading
         :param dir_name: directory name, where files will be downloaded
@@ -103,35 +103,31 @@ class GithubAPIWorker:
 
         async with self._semaphore:
             async with httpx.AsyncClient(timeout=10) as client:
-                try:
-                    response = await self._make_request(client, repo_api_url, headers)
-                    items = response.json()
+                response = await self._make_request(client, repo_api_url, headers)
+                items = response.json()
 
-                    tasks = []
-                    for item in items:
-                        logger.debug(f"{item['type'].capitalize()}: {item['name']}")
-                        if item["type"] == "file":
-                            # Download the file
-                            task = self._download_file(client, item, path_to_save, headers)
-                            tasks.append(task)
-                        elif item["type"] == "dir":
-                            # Recurse into subdirectories
-                            task = self.upload_repo_content(
-                                item["url"],
-                                deeper=True,
-                                dir_name=item["name"],
-                                path_to_save=path_to_save
-                            )
-                            tasks.append(task)
+                tasks = []
+                for item in items:
+                    logger.debug(f"{item['type'].capitalize()}: {item['name']}")
+                    if item["type"] == "file":
+                        # Download the file
+                        task = self._download_file(client, item, path_to_save, headers)
+                        tasks.append(task)
+                    elif item["type"] == "dir":
+                        # Recurse into subdirectories
+                        task = self.upload_repo_content(
+                            item["url"],
+                            deeper=True,
+                            dir_name=item["name"],
+                            path_to_save=path_to_save
+                        )
+                        tasks.append(task)
 
-                    await asyncio.gather(*tasks)
+                await asyncio.gather(*tasks)
 
-                    logger.info("Finished uploading repo")
+                logger.info("Finished uploading repo")
 
-                    return True
-                except Exception as e:
-                    logger.error(f"Failed to upload repo: {e}", exc_info=True)
-                    return False
+                return
 
     async def _download_file(self,
                              client: httpx.AsyncClient,

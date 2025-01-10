@@ -15,7 +15,7 @@ class OpenAIWorker:
         self._retries = 10
         self._timeout = 10
 
-    def __enter__(self):
+    async def __aenter__(self):
         try:
             logger.debug("Initializing OpenAI client")
             self._client = AsyncClient(
@@ -27,9 +27,9 @@ class OpenAIWorker:
             logger.error(f"OpenAI client initialization failed: {e}", exc_info=True)
             raise OpenAIError(e)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         try:
-            self._client.close()
+            await self._client.close()
             logger.debug("OpenAI client closed")
         except Exception as e:
             logger.error(f"OpenAI client close failed: {e}", exc_info=True)

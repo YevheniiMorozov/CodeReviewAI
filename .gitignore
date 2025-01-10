@@ -217,5 +217,5 @@ Thumbs.db
 *.mov
 *.wmv
 
-test.py
+local_test.py
 /repo_data

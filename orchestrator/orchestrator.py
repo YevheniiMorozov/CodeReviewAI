@@ -102,7 +102,7 @@ class Orchestrator:
                 assignment_description=self._assignment_description
             )
 
-        with OpenAIWorker() as worker:
+        async with OpenAIWorker() as worker:
             answer = await worker.get_answer_from_gpt(SYS_MESSAGE, user_message)
 
         return answer
@@ -152,21 +152,20 @@ class Orchestrator:
     async def run(self) -> OrchestratorResponse:
         try:
             await self._download_repo_content()
-        except exc.GithubAPIError as e:
-            if isinstance(e, exc.GithubRateLimitError):
-                if not self._github_rate_limit:
-                    self._github_rate_limit = await GithubAPIWorker.get_api_rate_limit()
-                _time = timestamp_to_human_date(self._github_rate_limit['reset'])
+        except exc.GithubRateLimitError as e:
+            if not self._github_rate_limit:
+                self._github_rate_limit = await GithubAPIWorker.get_api_rate_limit()
+            _time = timestamp_to_human_date(self._github_rate_limit['reset'])
 
-                return OrchestratorResponse(
-                    error=True,
-                    message=f"GitHub API rate limit exceeded. Reset in {_time}\nError: {e}"
-                )
-            if isinstance(e, exc.GithubNotFoundError):
-                return OrchestratorResponse(
-                    error=True,
-                    message=f"Repository not found: {self._repo_url}\nError: {e}"
-                )
+            return OrchestratorResponse(
+                error=True,
+                message=f"GitHub API rate limit exceeded. Reset in {_time}\nError: {e}"
+            )
+        except exc.GithubNotFoundError as e:
+            return OrchestratorResponse(
+                error=True,
+                message=f"GitHub repository not found: {e}"
+            )
         except Exception as e:
             msg = f"Unexpected error occurred when downloading repo content: {e}"
             logger.error(msg, exc_info=True)

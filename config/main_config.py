@@ -27,3 +27,6 @@ REPO_CONTENT_PATH_DIR = BASE_DIR / 'repo_data'
 REPO_CONTENT_PATH_DIR.mkdir(exist_ok=True)
 
 MAX_CONCURRENT_TASKS = config('MAX_CONCURRENT_TASKS', default=10, cast=int)
+
+WEB_APP_PORT = config('WEB_APP_PORT', default=5000, cast=int)
+WEB_APP_HOST = config('WEB_APP_HOST', default='0.0.0.0')

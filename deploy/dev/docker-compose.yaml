@@ -1,0 +1,19 @@
+version: "3.8"
+
+
+volumes:
+  data-redis:
+
+
+services:
+
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+    logging:
+      options:
+        max-file: "5"
+        max-size: "5m"

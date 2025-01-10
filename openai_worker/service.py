@@ -1,9 +1,10 @@
 import asyncio
 
 from openai import AsyncClient, RateLimitError
-from openai.resources import AsyncCompletions
+from openai.types.chat import ChatCompletion
 
 from config.main_config import OPEN_AI_API_KEY, OPEN_AI_MODEL
+from config.exceptions import OpenAIRateLimitError, OpenAIError
 from config.logger import get_logger
 
 logger = get_logger(__name__)
@@ -19,7 +20,7 @@ class OpenAIWorker:
         self._timeout = 10
 
 
-    async def _get_completion(self, model: str, messages: list[dict]) -> AsyncCompletions:
+    async def _get_completion(self, model: str, messages: list[dict]) -> ChatCompletion:
 
         attempt = 0
         while attempt < self._retries:
@@ -34,7 +35,10 @@ class OpenAIWorker:
                     await asyncio.sleep(self._timeout)
                     continue
                 logger.error(f"Request failed: {e}", exc_info=True)
-                raise
+                raise OpenAIRateLimitError(e)
+            except Exception as e:
+                logger.error(f"Request failed: {e}", exc_info=True)
+                raise OpenAIError(e)
 
 
     async def get_answer_from_gpt(self, user_message: str, sys_message: str) -> str:

@@ -4,10 +4,11 @@ from pathlib import Path
 from typing import Literal
 
 import httpx
-from httpx import Response, RequestError
+from httpx import Response, RequestError, HTTPStatusError
 
 from config.main_config import GITHUB_API_KEY, REPO_CONTENT_PATH_DIR, MAX_CONCURRENT_TASKS
 from config.utils import extract_repo_owner_and_name_from_url
+from config.exceptions import GithubNotFoundError
 from config.logger import get_logger
 
 logger = get_logger(__name__)
@@ -55,6 +56,9 @@ class GithubAPIWorker:
                     continue
                 logger.error(f"Request failed: {e}", exc_info=True)
                 raise
+            except HTTPStatusError as e:
+                logger.error(e, exc_info=True)
+                raise GithubNotFoundError(f"Repo not found: {url}")
 
     @classmethod
     async def get_api_rate_limit(cls) -> dict:

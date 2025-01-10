@@ -16,7 +16,7 @@ LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
 # configure OpenAI settings
 OPEN_AI_API_KEY = config('OPEN_AI_API_KEY')
 OPEN_AI_MODEL = config('OPEN_AI_MODEL', default='gpt-4-turbo')
-TOKEN_LIMITS = config('TOKEN_LIMITS', default=30_000, cast=int)
+OPEN_AI_TOKEN_LIMITS_PER_MINUTE = config('OPEN_AI_TOKEN_LIMITS_PER_MINUTE', default=30_000, cast=int)
 
 # configure GitHub settings
 GITHUB_API_KEY = config('GITHUB_API_KEY')
